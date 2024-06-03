@@ -79,9 +79,6 @@ def evaluate_updated(time_cat, mag_cat, mag_err_cat, flag_cat, band_cat, custom_
     This evaluation function takes in the ZTF (gr) detections and performs a dipper selection function.  
         
     """
-    
-    
-    Evaluate time series as of April 2024."""
 
     # Summary information
     summary_ = {}
@@ -162,30 +159,25 @@ def evaluate_updated(time_cat, mag_cat, mag_err_cat, flag_cat, band_cat, custom_
                     g_validate = False
                     xg = [] # empty array...
                 else:
-                    close_pair_time = time_g[close_g_dets][-1]
-                    close_pair_mag = mag_g[close_g_dets][-1]
-                    close_pair_mag_err = mag_err_g[close_g_dets][-1]
-                    close_pair_dev = running_deviation_g[close_g_dets][-1]
+                    close_pair_time = time_g[close_g_dets]
+                    close_pair_mag = mag_g[close_g_dets]
+                    close_pair_mag_err = mag_err_g[close_g_dets]
+                    close_pair_dev = running_deviation_g[close_g_dets]
+
+                    phase_close_g = abs(best_peak_time-close_pair_time) # closest neighbour
+                    srt_pairs = np.argsort(phase_close_g) # first index will be the nearest pair to best peak time!!
+
+                    _time_close_g, _mag_close_g, _magerr_close_g, _running_deviation_g = close_pair_time[srt_pairs], close_pair_mag[srt_pairs], close_pair_mag_err[srt_pairs], close_pair_dev[srt_pairs]
+
+                    # final selection!!
+                    close_pair_time = _time_close_g[0]
+                    close_pair_mag = _mag_close_g[0]
+                    close_pair_mag_err = _magerr_close_g[0]
+                    close_pair_dev = _running_deviation_g[0]
                     xg = [0]
             except:
                 g_validate = False
                 xg = [] # empty array...
-
-            
-            #try:
-            #    best_peak_time = bp['peak_loc'].values[0]
-            #    sel_g = np.where((time_g > best_peak_time-3) & (time_g < best_peak_time+3)) # peak within +/- 3 days
-            #    xg, yg, yerrg = time_g[sel_g], mag_g[sel_g], mag_err_g[sel_g]
-
-            #    Rg_mod, Sg_mod = astro_stats.biweight.biweight_location(yg), astro_stats.biweight.biweight_scale(yg)
-
-            #    yg_dev = deviation(yg, yerrg, Rg, Sg)
-            #except:
-            #    g_validate = False
-            #    xg = [] # empty array...
-            
-            # Select g-band detections at bp and expand by ~3 days
-            #xg, yg, yerrg = digest_the_peak(bp, time_g, running_deviation_g, mag_err_g, expandby=0) # do not expand...
             
             if (len(xg) == 0) or (g_validate==False): # reject if there's no detections...
                 g_validate = False
@@ -193,11 +185,15 @@ def evaluate_updated(time_cat, mag_cat, mag_err_cat, flag_cat, band_cat, custom_
                 g_validate = True
                 # Calculate the significance of this g-band bump...
                 out_g = (close_pair_dev-np.nanmean(running_deviation_g))/(np.nanstd(running_deviation_g))
+                print (f"Close pair dev: {close_pair_dev}", "Out_g: ", np.nanmean(running_deviation_g))
+                print (close_pair_dev)
+                print (out_g)
 
+    
             #TODO: check if 1.5 sigma is okay for now...
             if g_validate and out_g >1.5: # both r-band and g-band data show similar peaks...
         
-                _score_ = calc_sum_score(time, mag, peak_detections, R, S)
+                _score_ = calc_sum_score(time, mag, mag_err, peak_detections, R, S)
 
                 # If failing; set all values to NaN
                 for col in custom_cols:
@@ -251,4 +247,3 @@ def evaluate_updated(time_cat, mag_cat, mag_err_cat, flag_cat, band_cat, custom_
                 summary_['invNeumann'] = other_stats['invNeumann']
                 
     return pd.Series(list(summary_.values()), index=custom_cols)
-

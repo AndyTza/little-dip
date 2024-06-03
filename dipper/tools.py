@@ -17,6 +17,7 @@ from scipy import stats
 from stetson import stetson_j, stetson_k
 import os
 from scipy.optimize import curve_fit
+import matplotlib.pyplot as plt
 
 bad_times = np.zeros(100)
 
@@ -498,7 +499,7 @@ def auto_fit(x, y, yerr, loc, base, return_model=False):
         popt, pcov = curve_fit(gaus, 
                                 x,
                                 y,
-                                p0=[1, loc, 1, base],
+                                p0=[1, loc, 5, base],
                             bounds=((0.1, loc-5, 0.1, base-2),
                                     (np.inf, loc+5, np.inf, base+2)))
     except: # if fails return zeros...
@@ -509,7 +510,12 @@ def auto_fit(x, y, yerr, loc, base, return_model=False):
         chi = (y - model) / yerr
         return model, np.sum(chi**2)
     else:
-        return popt
+        #popt[2] += 50
+        model = gaus(x, *popt)
+        chi = (y - model) / yerr
+        plt.scatter(x, y)
+        plt.plot(x, model)
+        return popt, np.sum(chi**2)
 
 def fwhm_calc(pop):
     """Calculate the FWFM of the Gaussian fit.
@@ -519,22 +525,30 @@ def fwhm_calc(pop):
     """
     return 2.355 * pop[2] # fwhm 
 
-def calc_sum_score(xdat, ydat, peak_dict, base, rms):
+def calc_sum_score(xdat, ydat, yerr, peak_dict, base, rms):
     """Calculate the light curve score."""
     
     score_term = 0
     for i in range(peak_dict[0]):
         event = peak_dict[1][f'dip_{i}']
+
         loc = event['peak_loc']
         powr = event['dip_power']
         Ndet = event['N_1sig_in_dip']
+        ts, te = event['window_start'], event['window_end']
+
         
-        fit_temrs, chi2 = auto_fit(xdat, ydat,
-                             loc, base, return_model=False)
-        
+        eval0 = auto_fit(xdat, ydat, yerr, loc, base, return_model=False)
+        fit_temrs, chi2 = eval0[0], eval0[1]
+        ww = np.where((xdat > ts - 2*fit_temrs[2]) & (xdat < te + 2*fit_temrs[2]))
+        xx, yy, yerrr = xdat[ww], ydat[ww], yerr[ww]
+
+        model_trim = gaus(xx, *fit_temrs)
+        residual = (yy - model_trim) #/ 
+        chi_residual = np.sum(residual**2)
+
         fwhm = fwhm_calc(fit_temrs)
         
-        score_term += fwhm * powr * Ndet * 1/chi2
+        score_term += fwhm * (powr/4) * (Ndet) * 1/(chi_residual)
         
-    return (1/(peak_dict[0])) * (1/rms) * score_term
-
+    return  (1/(peak_dict[0]+1)**(peak_dict[0]+1)) * (1/rms) * score_term
