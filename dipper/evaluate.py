@@ -141,6 +141,8 @@ def evaluate_updated(time_cat, mag_cat, mag_err_cat, flag_cat, band_cat, custom_
             
             time_g, mag_g, mag_err_g = prepare_lc(time_cat, mag_cat, mag_err_cat,
                                                    flag_cat, band_cat, band_of_study='g', flag_good=0, q=None, custom_q=False)
+            #plt.scatter(time_g, mag_g, c='g', s=10, label='g-band')
+            #plt.scatter(time, mag, c='r', s=10, label='r-band')
             
             # minimum number of g-band detections after processing
             if len(time_g) > 10:
@@ -185,9 +187,10 @@ def evaluate_updated(time_cat, mag_cat, mag_err_cat, flag_cat, band_cat, custom_
                 g_validate = True
                 # Calculate the significance of this g-band bump...
                 out_g = (close_pair_dev-np.nanmean(running_deviation_g))/(np.nanstd(running_deviation_g))
+                #print (out_g)
 
-            # 2.5-sigma deviation cut
-            if g_validate and out_g >2.5: # both r-band and g-band data show similar peaks...
+            # Impose a 3 sigma cut on the g-band data...
+            if g_validate and out_g >3:
         
                 _score_ = calc_sum_score(time, mag, mag_err, peak_detections, R, S)
 

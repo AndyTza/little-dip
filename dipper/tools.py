@@ -104,11 +104,7 @@ def prepare_lc(time, mag, mag_err, flag, band, band_of_study='r', flag_good=0, q
 
         time, mag, mag_err = time[rmv], mag[rmv], mag_err[rmv]
 
-        # sort time
-        srt = time.argsort()
-
-        # TODO: innvestigate effects
-        time, mag, mag_err = time[srt], mag[srt], mag_err[srt]
+        # Remove consecutive observations
         ts = abs(time - np.roll(time, 1)) > 1e-5
             
         time, mag, mag_err = time[ts], mag[ts], mag_err[ts]
@@ -118,11 +114,9 @@ def prepare_lc(time, mag, mag_err, flag, band, band_of_study='r', flag_good=0, q
         cut_close_time = np.where(np.diff(time) < 0.5)[0] + 1
         time, mag, mag_err  = np.delete(time, cut_close_time), np.delete(mag, cut_close_time), np.delete(mag_err, cut_close_time)
 
-        #TODO: investigate effects
-        # TODO: we found that this was leading to misleading scores.. Overall we want to find the systematic spikes that are inflating the scores...
-        # Remove the bad masked times! 
-        #bads = np.logical_not(np.any((time.reshape(-1,1) > bad_times[:,0]) & (time.reshape(-1,1) < bad_times[:,1]), axis=1))
-        #time, mag, mag_err = time[bads], mag[bads], mag_err[bads]
+        # Sort times for later use...
+        srt = time.argsort()
+        time, mag, mag_err = time[srt], mag[srt], mag_err[srt]
 
         return time, mag, mag_err
     except:
