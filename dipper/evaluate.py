@@ -187,7 +187,7 @@ def evaluate_updated(time_cat, mag_cat, mag_err_cat, flag_cat, band_cat, custom_
                 g_validate = True
                 # Calculate the significance of this g-band bump...
                 out_g = (close_pair_dev-np.nanmean(running_deviation_g))/(np.nanstd(running_deviation_g))
-                #print (out_g)
+                print (out_g)
 
             # Impose a 3 sigma cut on the g-band data...
             if g_validate and out_g >3:

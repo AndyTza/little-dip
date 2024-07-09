@@ -54,7 +54,7 @@ def deviation(mag, mag_err, R, S):
 
 def detect_bursts_edges(time, mag, center_time, baseline_mean, baseline_std, burst_threshold=3.0, expansion_indices=1):
     """
-    Detect bursts in a time series using linear interpolation. powered by GPT. 
+    Detect bursts in a time series using linear interpolation. 
 
     Parameters:
     -----------
